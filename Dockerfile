@@ -10,7 +10,6 @@ ENV PYTHONUNBUFFERED=1
 
 COPY api /app
 COPY src /app/src
-COPY requirements.txt /app/.
 
 WORKDIR /app
 
