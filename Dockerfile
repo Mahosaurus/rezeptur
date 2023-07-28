@@ -10,6 +10,8 @@ ENV PYTHONUNBUFFERED=1
 
 COPY api /app
 COPY src /app/src
+COPY pyproject.toml /app
+COPY poetry.lock /app
 
 WORKDIR /app
 
