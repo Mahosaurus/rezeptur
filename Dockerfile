@@ -18,4 +18,4 @@ WORKDIR /app
 
 RUN python -m pip install poetry
 RUN poetry install
-CMD poetry shell; python3 app.py
+CMD poetry run python3 app.py
