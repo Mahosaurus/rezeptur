@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Ideas</title>
+    <!-- Link your CSS file or a CSS framework like Bootstrap here -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='styles/styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Recipe Ideas</h1>
+        <!-- Add navigation elements here if needed -->
+    </header>
+
+    <main>
+        <section class="course-filter">
+            <h2>Get a random recipe</h2>
+            <form id="course-filter-form">
+                <label for="course">Choose a course:</label>
+                <select name="course" id="course">
+                    <!-- Use Jinja to dynamically generate options from the backend -->
+                    <option value="starter">Starter</option>
+                    <option value="main_meal">Main Meal</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="others">Others</option>
+                </select>
+                <button type="button" onclick="getRandomRecipe()">Get Random Recipe</button>
+            </form>
+        </section>
+
+        <section class="recipe-list">
+            <h2>List of Recipes</h2>
+            <div class="dropdowns-container">
+                {% for course in ['starter', 'main', 'dessert', 'others'] %}
+                    <div class="dropdown">
+                        <h3>{{ course|capitalize }}</h3>
+                        <select name="{{ course }}" onchange="showRecipeSource(this)">
+                            <option value="">Select a recipe</option>
+                            {% for recipe in recipes %}
+                                {% if recipe.course == course %}
+                                    <option value="{{ recipe.source }}">{{ recipe.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endfor %}
+            </div>
+            <hr>
+            <p><div id="selected-recipe-source"></div></p>
+        </section>
+
+
+        <section class="random-menue">
+            <h2>Random Menue</h2>
+            <form id="menue-filter-form">
+                <button type="button" onclick="getRandomMenue()">Get Random Menue</button>
+            </form>>
+        </section>
+
+        <section class="add-recipe">
+            <h2>Add a New Recipe</h2>
+            <form id="add-recipe-form">
+                <!-- Add input fields for the new recipe data -->
+                <!-- Example:
+                <label for="name">Recipe Name:</label>
+                <input type="text" id="name" name="name" required>
+                -->
+                <button type="submit">Add Recipe</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        // Implement JavaScript functions to handle interactions and communicate with the backend
+        function getRandomRecipe() {
+            // Use AJAX or fetch to call the Flask route for getting a random recipe based on the selected course
+            // Update the recipe details on the page
+        }
+
+        function showRecipeSource(selectElement) {
+            const selectedSource = selectElement.value;
+            const selectedRecipeSource = document.getElementById('selected-recipe-source');
+            selectedRecipeSource.textContent = selectedSource;
+
+            const anchor = document.createElement('a');
+            anchor.href = selectedSource;
+            anchor.textContent = selectedSource;
+            selectedRecipeSource.innerHTML = '';
+            selectedRecipeSource.appendChild(anchor);
+        }
+
+        function addNewRecipe() {
+            // Use AJAX or fetch to call the Flask route for adding a new recipe
+            // Display a success message and update the recipe list with the new entry
+        }
+    </script>
+</body>
+</html>
