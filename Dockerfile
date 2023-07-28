@@ -12,6 +12,7 @@ COPY api /app
 COPY src /app/src
 COPY pyproject.toml /app
 COPY poetry.lock /app
+COPY README.md /app
 
 WORKDIR /app
 
