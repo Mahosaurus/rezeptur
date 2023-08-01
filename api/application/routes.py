@@ -1,22 +1,31 @@
+import random
+
 from flask import current_app as app
 from flask import request, redirect, flash, render_template
+from src.data_storage.postgres_handler import extract_data_from_postgres, send_data_to_postgres
 
 # Sample recipe data (you can replace this with a database later)
-recipes = [
-    { "name": "Recipe 1", "course": "starter", "source": "https://www.google.de", "season": "", "style": ""},
-    { "name": "Recipe 3", "course": "starter", "source": "Buch", "season": "", "style": "" },
-    { "name": "Recipe 2", "course": "main", "source": "Kopf", "season": "", "style": "" },
-    # Add more recipes here...
-]
-
 @app.route('/')
 def index():
+    # Query the database for all recipes
+    recipes = extract_data_from_postgres(app.config["POSTGRES_HOST"],
+                                         app.config["POSTGRES_DBNAME"],
+                                         app.config["POSTGRES_USER"],
+                                         app.config["POSTGRES_PASSWORD"])
     # Get the unique courses for the filter options
     courses = set(recipe['course'] for recipe in recipes)
-    return render_template('index.html', courses=courses, recipes=recipes)
+    return render_template('index.html', random_recipe=None, courses=courses, recipes=recipes)
 
-@app.route('/random_recipe', methods=['POST'])
-def random_recipe():
+@app.route('/single_random_recipe', methods=['GET','POST'])
+def single_random_recipe():
+    # Query the database for all recipes
+    recipes = extract_data_from_postgres(app.config["POSTGRES_HOST"],
+                                         app.config["POSTGRES_DBNAME"],
+                                         app.config["POSTGRES_USER"],
+                                         app.config["POSTGRES_PASSWORD"])
+    if request.method == 'GET':
+        return redirect('/')
+
     course = request.form.get('course')
     # Get a list of recipes for the selected course
     course_recipes = [recipe for recipe in recipes if recipe['course'] == course]
@@ -24,7 +33,9 @@ def random_recipe():
         return "No recipes found for the selected course."
 
     random_recipe = random.choice(course_recipes)
-    return render_template('random_recipe.html', random_recipe=random_recipe)
+    random_recipe.pop('id')
+    print("Random recipe: ", random_recipe)
+    return render_template('index.html', random_recipe=random_recipe, recipes=recipes)
 
 @app.route('/add_recipe', methods=['GET', 'POST'])
 def add_recipe():
@@ -33,10 +44,16 @@ def add_recipe():
         new_recipe = {
             "name": request.form['name'],
             "course": request.form['course'],
-            "ingredients": request.form['ingredients'],
-            "instructions": request.form['instructions']
+            "description": request.form['description'],
+            "source": request.form['source'],
+            "season": request.form['season'],
+            "style": request.form['style']
         }
-        recipes.append(new_recipe)
+        send_data_to_postgres(app.config["POSTGRES_HOST"],
+                              app.config["POSTGRES_DBNAME"],
+                              app.config["POSTGRES_USER"],
+                              app.config["POSTGRES_PASSWORD"],
+                              new_recipe)
         return "Recipe added successfully!"
 
     # If it's a GET request, just render the form
