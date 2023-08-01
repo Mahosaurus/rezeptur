@@ -16,18 +16,27 @@
     <main>
         <section class="course-filter">
             <h2>Get a random recipe</h2>
-            <form id="course-filter-form">
+            <form action="{{ url_for('single_random_recipe') }}" method="post">
                 <label for="course">Choose a course:</label>
                 <select name="course" id="course">
                     <!-- Use Jinja to dynamically generate options from the backend -->
                     <option value="starter">Starter</option>
-                    <option value="main_meal">Main Meal</option>
+                    <option value="main">Main</option>
                     <option value="dessert">Dessert</option>
                     <option value="others">Others</option>
                 </select>
-                <button type="button" onclick="getRandomRecipe()">Get Random Recipe</button>
+                <button type="submit">Get Random Recipe</button>
             </form>
+            <hr>
+            <p><div id="random-recipe">
+                {% if random_recipe.name %}
+                    <li>Name: {{ random_recipe.name }}</li>
+                    <li>Description: {{ random_recipe.description }}</li>
+                    <li>Source: {{ random_recipe.source }}</li>
+                {% endif %}
+                </div></p>
         </section>
+
 
         <section class="recipe-list">
             <h2>List of Recipes</h2>
@@ -47,7 +56,7 @@
                 {% endfor %}
             </div>
             <hr>
-            <p><div id="selected-recipe-source"></div></p>
+            <p><label>Recipe source:</label><div id="selected-recipe-source"></div></p>
         </section>
 
 
@@ -60,12 +69,40 @@
 
         <section class="add-recipe">
             <h2>Add a New Recipe</h2>
-            <form id="add-recipe-form">
-                <!-- Add input fields for the new recipe data -->
-                <!-- Example:
+            <form id="add-recipe-form", action="{{ url_for('add_recipe') }}" method="post">
                 <label for="name">Recipe Name:</label>
                 <input type="text" id="name" name="name" required>
-                -->
+                <label for="course">Course:</label>
+                <select name="course" id="course">
+                    <option value="starter">Starter</option>
+                    <option value="main">Main</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="others">Others</option>
+                </select>
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+                <label for="source">Source:</label>
+                <input type="text" id="source" name="source" required>
+                <label for="season">Season:</label>
+                <select name="season" id="season">
+                    <option value="all">All</option>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                </select>
+                <label for="style">Style:</label>
+                <select name="style" id="style">
+                    <option value="all">All</option>
+                    <option value="asiatisch">Asiatisch</option>
+                    <option value="europäisch">Europäisch</option>
+                    <option value="indisch">Indisch</option>
+                    <option value="italienisch">Italienisch</option>
+                    <option value="mediterran">Mediterran</option>
+                    <option value="mexikanisch">Mexikanisch</option>
+                    <option value="orientalisch">Orientalisch</option>
+                    <option value="thailändisch">Thailändisch</option>
+                </select>
                 <button type="submit">Add Recipe</button>
             </form>
         </section>
