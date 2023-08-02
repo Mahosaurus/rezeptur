@@ -1,3 +1,5 @@
+import os
+
 import psycopg2
 
 
@@ -24,7 +26,7 @@ def send_data_to_postgres(host: str, dbname: str, user: str, password: str, data
 
     cursor = conn.cursor()
     # Create a table
-    field_types = "name VARCHAR(15), course VARCHAR(10), description VARCHAR(1000), source VARCHAR(100), season VARCHAR(10), style VARCHAR(30)"
+    field_types = "name VARCHAR(50), course VARCHAR(30), description VARCHAR(1000), source VARCHAR(100), season VARCHAR(30), style VARCHAR(30)"
     cursor.execute(f"CREATE TABLE IF NOT EXISTS rezepte (id serial PRIMARY KEY, {field_types});")
     print("Finished creating table")
 
@@ -101,23 +103,23 @@ def fix_entries():
     pass #TODO: implementation
 
 def check_course(course: str):
-    if course not in ("starter", "main", "dessert"):
-        raise ValueError("Course must be one of: starter, main, dessert")
+    if course not in ("starter", "main", "dessert", "other"):
+        raise ValueError("Course must be one of: starter, main, dessert, other")
 
 def check_season(season: str):
-    if season not in ("spring", "summer", "autumn", "winter", "all"):
-        raise ValueError("Season must be one of: spring, summer, autumn, winter, all")
+    if season not in ("spring", "summer", "autumn", "winter", "other"):
+        raise ValueError("Season must be one of: spring, summer, autumn, winter, other")
 
 if __name__ == "__main__":
-    host = ""
-    dbname = ""
-    user = ""
-    password = ""
+
+    host = os.environ["POSTGRES_HOST"]
+    dbname = os.environ["POSTGRES_DBNAME"]
+    user = os.environ["POSTGRES_USER"]
+    password = os.environ["POSTGRES_PASSWORD"]
     sslmode = "require"
+    show_database(host, dbname, user, password)
     delete_database(host, dbname, user, password, sslmode)
-    data = {"name": "Gemüsecurry", "course": "main", "description": "Standard Gemüsecurry", "source": "Erfahrung", "season": "all", "style": "asiatisch"}
-    send_data_to_postgres(host, dbname, user, password, data)
-    # data2 = {"name": "test2", "course": "main", "description": "test2", "source": "test2", "season": "summer", "style": "test2"}
-    # send_data_to_postgres(host, dbname, user, password, data2)
-    # show_database(host, dbname, user, password)
-    # print(extract_data_from_postgres(host, dbname, user, password))
+    from food_data import data
+    for entry in data:
+        send_data_to_postgres(host, dbname, user, password, entry)
+    show_database(host, dbname, user, password)

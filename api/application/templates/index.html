@@ -9,12 +9,19 @@
 </head>
 <body>
     <header>
-        <h1>Recipe Ideas</h1>
-        <!-- Add navigation elements here if needed -->
+        <h1><u>Recipe Ideas</u></h1>
+        <nav>
+            <ul>
+                <li><a href="#random-recipe">Get a random recipe</a></li>
+                <li><a href="#recipe-list">List of Recipes</a></li>
+                <li><a href="#random-menue">Random menue</a></li>
+                <li><a href="#add-recipe">Add a New Recipe</a></li>
+            </ul>
+        </nav>
     </header>
 
     <main>
-        <section class="course-filter">
+        <section class="random-recipe" id="random-recipe">
             <h2>Get a random recipe</h2>
             <form action="{{ url_for('single_random_recipe') }}" method="post">
                 <label for="course">Choose a course:</label>
@@ -37,8 +44,7 @@
                 </div></p>
         </section>
 
-
-        <section class="recipe-list">
+        <section class="recipe-list" id="recipe-list">
             <h2>List of Recipes</h2>
             <div class="dropdowns-container">
                 {% for course in ['starter', 'main', 'dessert', 'others'] %}
@@ -60,14 +66,14 @@
         </section>
 
 
-        <section class="random-menue">
+        <section class="random-menue" id="random-menue">
             <h2>Random Menue</h2>
             <form id="menue-filter-form">
                 <button type="button" onclick="getRandomMenue()">Get Random Menue</button>
             </form>>
         </section>
 
-        <section class="add-recipe">
+        <section class="add-recipe" id="add-recipe">
             <h2>Add a New Recipe</h2>
             <form id="add-recipe-form", action="{{ url_for('add_recipe') }}" method="post">
                 <label for="name">Recipe Name:</label>
@@ -77,7 +83,7 @@
                     <option value="starter">Starter</option>
                     <option value="main">Main</option>
                     <option value="dessert">Dessert</option>
-                    <option value="others">Others</option>
+                    <option value="other">Other/Multiple</option>
                 </select>
                 <label for="description">Description:</label>
                 <textarea id="description" name="description" required></textarea>
@@ -85,7 +91,7 @@
                 <input type="text" id="source" name="source" required>
                 <label for="season">Season:</label>
                 <select name="season" id="season">
-                    <option value="all">All</option>
+                    <option value="other">Other/Multiple</option>
                     <option value="spring">Spring</option>
                     <option value="summer">Summer</option>
                     <option value="autumn">Autumn</option>
@@ -93,7 +99,7 @@
                 </select>
                 <label for="style">Style:</label>
                 <select name="style" id="style">
-                    <option value="all">All</option>
+                    <option value="other">Other</option>
                     <option value="asiatisch">Asiatisch</option>
                     <option value="europäisch">Europäisch</option>
                     <option value="indisch">Indisch</option>
@@ -110,11 +116,6 @@
 
     <script>
         // Implement JavaScript functions to handle interactions and communicate with the backend
-        function getRandomRecipe() {
-            // Use AJAX or fetch to call the Flask route for getting a random recipe based on the selected course
-            // Update the recipe details on the page
-        }
-
         function showRecipeSource(selectElement) {
             const selectedSource = selectElement.value;
             const selectedRecipeSource = document.getElementById('selected-recipe-source');
@@ -125,11 +126,6 @@
             anchor.textContent = selectedSource;
             selectedRecipeSource.innerHTML = '';
             selectedRecipeSource.appendChild(anchor);
-        }
-
-        function addNewRecipe() {
-            // Use AJAX or fetch to call the Flask route for adding a new recipe
-            // Display a success message and update the recipe list with the new entry
         }
     </script>
 </body>

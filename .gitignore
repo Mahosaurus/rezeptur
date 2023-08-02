@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 *.crt
 .vscode/settings.json
+food_data.py
