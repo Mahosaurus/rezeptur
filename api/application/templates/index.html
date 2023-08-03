@@ -30,24 +30,26 @@
                     <option value="starter">Starter</option>
                     <option value="main">Main</option>
                     <option value="dessert">Dessert</option>
-                    <option value="others">Others</option>
+                    <option value="other">Other</option>
                 </select>
                 <button type="submit">Get Random Recipe</button>
             </form>
             <hr>
             <p><div id="random-recipe">
-                {% if random_recipe.name %}
-                    <li>Name: {{ random_recipe.name }}</li>
-                    <li>Description: {{ random_recipe.description }}</li>
-                    <li>Source: {{ random_recipe.source }}</li>
-                {% endif %}
+                <ul style="list-style-type:none;">
+                    {% if random_recipe.name %}
+                        <li>Name: {{ random_recipe.name }}</li>
+                        <li>Description: {{ random_recipe.description }}</li>
+                        <li>Source: {{ random_recipe.source }}</li>
+                    {% endif %}
+                </ul>
                 </div></p>
         </section>
 
         <section class="recipe-list" id="recipe-list">
             <h2>List of Recipes</h2>
             <div class="dropdowns-container">
-                {% for course in ['starter', 'main', 'dessert', 'others'] %}
+                {% for course in ['starter', 'main', 'dessert', 'other'] %}
                     <div class="dropdown">
                         <h3>{{ course|capitalize }}</h3>
                         <select name="{{ course }}" onchange="showRecipeSource(this)">
@@ -127,6 +129,35 @@
             selectedRecipeSource.innerHTML = '';
             selectedRecipeSource.appendChild(anchor);
         }
+       // Function to show the selected section and hide others
+       function showSection(sectionId) {
+            const sections = document.querySelectorAll('main section');
+            sections.forEach(section => {
+                if (section.id === sectionId) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // Smooth scrolling to anchor when a navigation option is clicked
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const sectionId = anchor.getAttribute('href').slice(1);
+                showSection(sectionId);
+
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Show the initially selected section (optional, for example, the first section)
+        showSection('random-recipe');
     </script>
 </body>
 </html>

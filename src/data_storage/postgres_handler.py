@@ -117,7 +117,10 @@ if __name__ == "__main__":
     user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     sslmode = "require"
-    show_database(host, dbname, user, password)
+    try:
+        show_database(host, dbname, user, password)
+    except:
+        pass
     delete_database(host, dbname, user, password, sslmode)
     from food_data import data
     for entry in data:
