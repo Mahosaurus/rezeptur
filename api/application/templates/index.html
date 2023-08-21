@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Ideas</title>
+    <!-- Link your CSS file or a CSS framework like Bootstrap here -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='styles/styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1><u>Recipe Ideas</u></h1>
+        <nav>
+            <ul>
+                <li><a href="#random-recipe">Get a random recipe</a></li>
+                <li><a href="#recipe-list">List of Recipes</a></li>
+                <li><a href="#random-menue">Random menue</a></li>
+                <li><a href="#add-recipe">Add a New Recipe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="random-recipe" id="random-recipe">
+            <h2>Get a random recipe</h2>
+            <form action="{{ url_for('single_random_recipe') }}" method="post">
+                <label for="course">Choose a course:</label>
+                <select name="course" id="course">
+                    <!-- Use Jinja to dynamically generate options from the backend -->
+                    <option value="starter">Starter</option>
+                    <option value="main">Main</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="other">Other</option>
+                </select>
+                <button type="submit">Get Random Recipe</button>
+            </form>
+            <hr>
+            <p><div id="random-recipe">
+                <ul style="list-style-type:none;">
+                    {% if random_recipe.name %}
+                        <li>Name: {{ random_recipe.name }}</li>
+                        <li>Description: {{ random_recipe.description }}</li>
+                        <li>Source: {{ random_recipe.source }}</li>
+                    {% endif %}
+                </ul>
+                </div></p>
+        </section>
+
+        <section class="recipe-list" id="recipe-list">
+            <h2>List of Recipes</h2>
+            <div class="dropdowns-container">
+                {% for course in ['starter', 'main', 'dessert', 'other'] %}
+                    <div class="dropdown">
+                        <h3>{{ course|capitalize }}</h3>
+                        <select name="{{ course }}" onchange="showRecipeSource(this)">
+                            <option value="">Select a recipe</option>
+                            {% for recipe in recipes %}
+                                {% if recipe.course == course %}
+                                    <option value="{{ recipe.source }}">{{ recipe.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endfor %}
+            </div>
+            <hr>
+            <p><label>Recipe source:</label><div id="selected-recipe-source"></div></p>
+        </section>
+
+
+        <section class="random-menue" id="random-menue">
+            <h2>Random Menue</h2>
+            <form id="menue-filter-form">
+                <button type="button" onclick="getRandomMenue()">Get Random Menue</button>
+            </form>>
+        </section>
+
+        <section class="add-recipe" id="add-recipe">
+            <h2>Add a New Recipe</h2>
+            <form id="add-recipe-form", action="{{ url_for('add_recipe') }}" method="post">
+                <label for="name">Recipe Name:</label>
+                <input type="text" id="name" name="name" required>
+                <label for="course">Course:</label>
+                <select name="course" id="course">
+                    <option value="starter">Starter</option>
+                    <option value="main">Main</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="other">Other/Multiple</option>
+                </select>
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+                <label for="source">Source:</label>
+                <input type="text" id="source" name="source" required>
+                <label for="season">Season:</label>
+                <select name="season" id="season">
+                    <option value="other">Other/Multiple</option>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                </select>
+                <label for="style">Style:</label>
+                <select name="style" id="style">
+                    <option value="other">Other</option>
+                    <option value="asiatisch">Asiatisch</option>
+                    <option value="europäisch">Europäisch</option>
+                    <option value="indisch">Indisch</option>
+                    <option value="italienisch">Italienisch</option>
+                    <option value="mediterran">Mediterran</option>
+                    <option value="mexikanisch">Mexikanisch</option>
+                    <option value="orientalisch">Orientalisch</option>
+                    <option value="thailändisch">Thailändisch</option>
+                </select>
+                <button type="submit">Add Recipe</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        // Implement JavaScript functions to handle interactions and communicate with the backend
+        function showRecipeSource(selectElement) {
+            const selectedSource = selectElement.value;
+            const selectedRecipeSource = document.getElementById('selected-recipe-source');
+            selectedRecipeSource.textContent = selectedSource;
+
+            const anchor = document.createElement('a');
+            anchor.href = selectedSource;
+            anchor.textContent = selectedSource;
+            selectedRecipeSource.innerHTML = '';
+            selectedRecipeSource.appendChild(anchor);
+        }
+       // Function to show the selected section and hide others
+       function showSection(sectionId) {
+            const sections = document.querySelectorAll('main section');
+            sections.forEach(section => {
+                if (section.id === sectionId) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // Smooth scrolling to anchor when a navigation option is clicked
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const sectionId = anchor.getAttribute('href').slice(1);
+                showSection(sectionId);
+
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Show the initially selected section (optional, for example, the first section)
+        showSection('random-recipe');
+    </script>
+</body>
+</html>
