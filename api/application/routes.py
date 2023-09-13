@@ -2,16 +2,19 @@ import random
 
 from flask import current_app as app
 from flask import request, redirect, flash, render_template, url_for
-from src.data_storage.postgres_handler import extract_data_from_postgres, send_data_to_postgres
+from src.data_storage.postgres_handler import PostgresHandler
+
+postgres_conn = PostgresHandler(app.config["POSTGRES_HOST"],
+                                app.config["POSTGRES_DBNAME"],
+                                app.config["POSTGRES_USER"],
+                                app.config["POSTGRES_PASSWORD"])
+
 
 # Sample recipe data (you can replace this with a database later)
 @app.route('/')
 def index():
     # Query the database for all recipes
-    recipes = extract_data_from_postgres(app.config["POSTGRES_HOST"],
-                                         app.config["POSTGRES_DBNAME"],
-                                         app.config["POSTGRES_USER"],
-                                         app.config["POSTGRES_PASSWORD"])
+    recipes = postgres_conn.extract_data_from_postgres()
     # Get the unique courses for the filter options
     courses = set(recipe['course'] for recipe in recipes)
     return render_template('index.html', random_recipe=None, courses=courses, recipes=recipes)
@@ -19,10 +22,7 @@ def index():
 @app.route('/single_random_recipe', methods=['GET','POST'])
 def single_random_recipe():
     # Query the database for all recipes
-    recipes = extract_data_from_postgres(app.config["POSTGRES_HOST"],
-                                         app.config["POSTGRES_DBNAME"],
-                                         app.config["POSTGRES_USER"],
-                                         app.config["POSTGRES_PASSWORD"])
+    recipes = postgres_conn.extract_data_from_postgres()
     if request.method == 'GET':
         return redirect(url_for('index'))
 
@@ -49,12 +49,9 @@ def add_recipe():
             "season": request.form['season'],
             "style": request.form['style']
         }
-        send_data_to_postgres(app.config["POSTGRES_HOST"],
-                              app.config["POSTGRES_DBNAME"],
-                              app.config["POSTGRES_USER"],
-                              app.config["POSTGRES_PASSWORD"],
-                              new_recipe)
+        postgres_conn.send_data_to_postgres(new_recipe)
         return "Recipe added successfully!"
 
     # If it's a GET request, just render the form
+    recipes = postgres_conn.extract_data_from_postgres()
     return render_template('add_recipe.html', courses=set(recipe['course'] for recipe in recipes))

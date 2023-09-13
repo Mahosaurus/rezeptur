@@ -18,7 +18,12 @@
                 "python.linting.pylintEnabled": true,
                 "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
                 "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
-            }
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"GitHub.copilot"
+			]
 
         }
     },
