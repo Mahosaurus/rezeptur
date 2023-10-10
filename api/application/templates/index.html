@@ -34,21 +34,23 @@
                 <button type="submit">Get Random Recipe</button>
             </form>
             <hr>
-            <p><div id="random-recipe">
-                <ul style="list-style-type:none;">
-                    {% if random_recipe.name %}
-                        <li>Name: {{ random_recipe.name }}</li>
-                        <li>Description: {{ random_recipe.description }}</li>
-                        <li>Source: {{ random_recipe.source }}</li>
-                    {% endif %}
-                </ul>
-                </div></p>
+            <p>
+                <div id="random-recipe">
+                    <ul style="list-style-type:none;">
+                        {% if random_recipe.name %}
+                            <li>Name: {{ random_recipe.name }}</li>
+                            <li>Description: {{ random_recipe.description }}</li>
+                            <li>Source: {{ random_recipe.source | safe}} </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </p>
         </section>
 
         <section class="recipe-list" id="recipe-list">
             <h2>List of Recipes</h2>
             <div class="dropdowns-container">
-                {% for course in ['starter', 'main', 'dessert', 'other'] %}
+                {% for course in courses %}
                     <div class="dropdown">
                         <h3>{{ course|capitalize }}</h3>
                         <select name="{{ course }}" onchange="showRecipeSource(this)">
@@ -120,6 +122,7 @@
             selectedRecipeSource.innerHTML = '';
             selectedRecipeSource.appendChild(anchor);
         }
+
        // Function to show the selected section and hide others
        function showSection(sectionId) {
             const sections = document.querySelectorAll('main section');

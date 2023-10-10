@@ -161,3 +161,4 @@ cython_debug/
 *.crt
 .vscode/settings.json
 food_export.json
+SECRET_postgres_export

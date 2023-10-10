@@ -14,9 +14,9 @@ postgres_conn = PostgresHandler(app.config["POSTGRES_HOST"],
 @app.route('/')
 def index():
     # Query the database for all recipes
-    recipes = postgres_conn.extract_data_from_postgres()
+    recipes = postgres_conn.extract_data_from_postgres() # recipe 1, recipe 2
     # Get the unique courses for the filter options
-    courses = set(recipe['course'] for recipe in recipes)
+    courses = set(recipe['course'] for recipe in recipes) # starter, main...
     return render_template('index.html', random_recipe=None, courses=courses, recipes=recipes)
 
 @app.route('/single_random_recipe', methods=['GET','POST'])
@@ -34,7 +34,11 @@ def single_random_recipe():
         return redirect(url_for('index'))
 
     random_recipe = random.choice(course_recipes)
-    random_recipe.pop('id')
+
+    # Add hyperlink to source
+    source = random_recipe["source"]
+    random_recipe["source"] = f"<a href='{source}'>{source}</a>"
+    print(random_recipe["source"])
     return render_template('index.html', random_recipe=random_recipe, recipes=recipes)
 
 @app.route('/add_recipe', methods=['GET', 'POST'])
