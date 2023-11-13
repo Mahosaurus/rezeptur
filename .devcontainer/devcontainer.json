@@ -18,13 +18,19 @@
                 "python.linting.pylintEnabled": true,
                 "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
                 "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
-            }
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"GitHub.copilot"
+			]
 
         }
     },
 
     "remoteEnv": {
-		"NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt"
+		"NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt",
+        "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt"
 	},
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],

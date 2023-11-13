@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Ideas</title>
-    <!-- Link your CSS file or a CSS framework like Bootstrap here -->
+    <title>Recipe Idea Generator</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static',filename='styles/styles.css') }}">
 </head>
 <body>
     <header>
-        <h1><u>Recipe Ideas</u></h1>
+        <h1><u><a href="/">Recipe Ideas</a></u></h1>
         <nav>
             <ul>
                 <li><a href="#random-recipe">Get a random recipe</a></li>
                 <li><a href="#recipe-list">List of Recipes</a></li>
-                <li><a href="#random-menue">Random menue</a></li>
                 <li><a href="#add-recipe">Add a New Recipe</a></li>
+                <li><a href="#export-data">Export Data</a></li>
             </ul>
         </nav>
     </header>
@@ -35,28 +35,32 @@
                 <button type="submit">Get Random Recipe</button>
             </form>
             <hr>
-            <p><div id="random-recipe">
-                <ul style="list-style-type:none;">
-                    {% if random_recipe.name %}
-                        <li>Name: {{ random_recipe.name }}</li>
-                        <li>Description: {{ random_recipe.description }}</li>
-                        <li>Source: {{ random_recipe.source }}</li>
-                    {% endif %}
-                </ul>
-                </div></p>
+            <p>
+                <div id="random-recipe">
+                    <ul style="list-style-type:none;">
+                        {% if random_recipe.name %}
+                            <li>Name: {{ random_recipe.name }}</li>
+                            <li>Description: {{ random_recipe.description }}</li>
+                            <li>Source: {{ random_recipe.source | safe}} </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </p>
         </section>
 
         <section class="recipe-list" id="recipe-list">
             <h2>List of Recipes</h2>
             <div class="dropdowns-container">
-                {% for course in ['starter', 'main', 'dessert', 'other'] %}
+                {% for course in ["starter", "main", "dessert", "other"] %}
                     <div class="dropdown">
                         <h3>{{ course|capitalize }}</h3>
                         <select name="{{ course }}" onchange="showRecipeSource(this)">
                             <option value="">Select a recipe</option>
                             {% for recipe in recipes %}
                                 {% if recipe.course == course %}
-                                    <option value="{{ recipe.source }}">{{ recipe.name }}</option>
+                                    <option source="{{ recipe.source }}"
+                                            desc="{{ recipe.description }}"
+                                            name="{{ recipe.name }}">{{ recipe.name }}</option>
                                 {% endif %}
                             {% endfor %}
                         </select>
@@ -64,15 +68,15 @@
                 {% endfor %}
             </div>
             <hr>
-            <p><label>Recipe source:</label><div id="selected-recipe-source"></div></p>
-        </section>
-
-
-        <section class="random-menue" id="random-menue">
-            <h2>Random Menue</h2>
-            <form id="menue-filter-form">
-                <button type="button" onclick="getRandomMenue()">Get Random Menue</button>
-            </form>>
+            <p>
+            <div id="random-recipe">
+                <ul style="list-style-type:none;">
+                        <li>Name: <div id="selected-recipe-name"></div></li>
+                        <li>Description: <div id="selected-recipe-description"></div></li>
+                        <li>Source: <div id="selected-recipe-source"></div> </li>
+                </ul>
+            </div>
+            </p>
         </section>
 
         <section class="add-recipe" id="add-recipe">
@@ -114,12 +118,20 @@
                 <button type="submit">Add Recipe</button>
             </form>
         </section>
+
+        <section class="export-data" id="export-data">
+            <h2>Export Data</h2>
+            <form action="{{ url_for('export_data') }}" method="post">
+                <button type="submit">Export Data</button>
+            </form>
+        </section>
     </main>
 
     <script>
         // Implement JavaScript functions to handle interactions and communicate with the backend
         function showRecipeSource(selectElement) {
-            const selectedSource = selectElement.value;
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const selectedSource = selectedOption.getAttribute('source');
             const selectedRecipeSource = document.getElementById('selected-recipe-source');
             selectedRecipeSource.textContent = selectedSource;
 
@@ -128,7 +140,16 @@
             anchor.textContent = selectedSource;
             selectedRecipeSource.innerHTML = '';
             selectedRecipeSource.appendChild(anchor);
+
+            const selectedDesc = selectedOption.getAttribute('desc');
+            const selectedRecipeDesc= document.getElementById('selected-recipe-description');
+            selectedRecipeDesc.textContent = selectedDesc;
+
+            const selectedName = selectedOption.getAttribute('name');
+            const selectedRecipeName = document.getElementById('selected-recipe-name');
+            selectedRecipeName.textContent = selectedName;
         }
+
        // Function to show the selected section and hide others
        function showSection(sectionId) {
             const sections = document.querySelectorAll('main section');

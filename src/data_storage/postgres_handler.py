@@ -1,128 +1,129 @@
+#pylint: disable=import-error, redefined-outer-name
+import json
 import os
 
 import psycopg2
 
+class PostgresInteraction():
+    def __init__(self, host: str, dbname: str, user: str, password: str, table: str=os.getenv("POSTGRES_TABLE")):
+        """Class for handling connections to a PostgreSQL database."""
+        self.host = host
+        self.dbname = dbname
+        self.user = user
+        self.password = password
+        self.table = table
+        self.conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(self.host, self.user, self.dbname, self.password, "require")
+        self.conn: psycopg2.extensions.connection=None,
+        self.cursor: psycopg2.extensions.cursor=None
 
-def send_data_to_postgres(host: str, dbname: str, user: str, password: str, data: dict):
-    """Send data to postgres database."""
-    name        = data["name"]
-    course      = data["course"]
-    description = data["description"]
-    source      = data["source"]
-    season      = data["season"]
-    style       = data["style"]
+    def open_cursor_and_conn(self):
+        """Get cursor to postgres database."""
+        self.conn = psycopg2.connect(self.conn_string)
+        print("Connection established")
+        self.cursor = self.conn.cursor()
 
-    # Data check:
-    check_course(course)
-    check_season(season)
+    def close_cursor_and_conn(self):
+        """Close cursor to postgres database."""
+        self.conn.commit()
+        self.cursor.close()
+        self.conn.close()
+        print("Connection closed")
 
-    # Update connection string information
-    sslmode = "require"
-    # Construct connection string
-    conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
+    def _get_all_entries(self):
+        """Get all entries from postgres database."""
+        self.open_cursor_and_conn()
+        # Create a table
+        self.cursor.execute("SELECT * FROM rezepte")
+        rows = self.cursor.fetchall()
 
-    conn = psycopg2.connect(conn_string)
-    print("Connection established")
+        self.close_cursor_and_conn()
+        return rows
 
-    cursor = conn.cursor()
-    # Create a table
-    field_types = "name VARCHAR(50), course VARCHAR(30), description VARCHAR(1000), source VARCHAR(100), season VARCHAR(30), style VARCHAR(30)"
-    cursor.execute(f"CREATE TABLE IF NOT EXISTS rezepte (id serial PRIMARY KEY, {field_types});")
-    print("Finished creating table")
+    def send_data_to_postgres(self, data: dict):
+        """Send data to postgres database."""
+        name        = data["name"]
+        course      = data["course"]
+        description = data["description"]
+        source      = data["source"]
+        season      = data["season"]
+        style       = data["style"]
 
-    # Insert data into the table
-    field_names = "name, course, description, source, season, style"
-    field_values = (name, course, description, source, season, style)
-    cursor.execute(f"INSERT INTO rezepte ({field_names}) VALUES {field_values};")
-    print("Inserted 1 rows of data")
+        # Data check:
+        self.check_course(course)
+        self.check_season(season)
 
-    conn.commit()
+        self.open_cursor_and_conn()
 
-    cursor.close()
-    conn.close()
+        # Create a table (if not exists)
+        field_types = (
+            "name VARCHAR(50), "
+            "course VARCHAR(30), "
+            "description VARCHAR(1000), "
+            "source VARCHAR(100), "
+            "season VARCHAR(30), "
+            "style VARCHAR(30)"
+        )
+        create_query = f"CREATE TABLE IF NOT EXISTS rezepte (id serial PRIMARY KEY, {field_types});"
+        self.cursor.execute(create_query)
+        print("Finished creating table")
 
-def extract_data_from_postgres(host: str, dbname: str, user: str, password: str):
-    # Update connection string information
-    sslmode = "require"
-    # Construct connection string
-    conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
+        # Insert data into the table
+        field_names = "name, course, description, source, season, style"
+        field_values = (name, course, description, source, season, style)
+        insert_query = f"INSERT INTO rezepte ({field_names}) VALUES {field_values};"
+        self.cursor.execute(insert_query)
+        print("Inserted 1 rows of data")
 
-    conn = psycopg2.connect(conn_string)
-    print("Connection established")
+        # Remove duplicates
+        print("Removing duplicates")
+        delete_query = """
+            DELETE FROM rezepte a USING rezepte b
+            WHERE a.ctid < b.ctid
+            AND a.name = b.name
+            AND a.course = b.course
+            AND a.description = b.description
+            AND a.source = b.source
+            AND a.season = b.season
+            AND a.style = b.style;
+        """
+        self.cursor.execute(delete_query)
+        self.close_cursor_and_conn()
 
-    cursor = conn.cursor()
-    # Create a table
-    cursor.execute("SELECT * FROM rezepte")
-    rows = cursor.fetchall()
+    def extract_data_from_postgres(self):
+        """Extract data from postgres database for app."""
+        rows = self._get_all_entries()
+        fields = ['id', 'name', 'course', 'description', 'source', 'season', 'style']
+        return [dict(zip(fields, row)) for row in rows]
 
-    cursor.close()
-    conn.close()
-    fields = ['id', 'name', 'course', 'description', 'source', 'season', 'style']
+    def delete_database(self):
+        """Delete database."""
+        self.open_cursor_and_conn()
+        # Create a table
+        self.cursor.execute("DROP TABLE IF EXISTS rezepte")
+        print("Finished dropping table")
+        self.close_cursor_and_conn()
 
-    return [dict(zip(fields, row)) for row in rows if row[0] != 0]
+    def export_database(self, export: bool=False) -> list:
+        """Export database entries to json file."""
+        rows = self._get_all_entries()
 
+        fields = ['id', 'name', 'course', 'description', 'source', 'season', 'style']
+        # Do not export "id"
+        export_dict = [dict(zip(fields[1:], row[1:])) for row in rows]
+        if export:
+            with open("food_export.json", "w", encoding='utf-8') as filehandle:
+                json.dump(export_dict, filehandle, ensure_ascii=False, indent=4)
+        print("Finished exporting table")
+        return export_dict
 
-def delete_database(host: str, dbname: str, user: str, password: str, data: str):
-    # Update connection string information
-    sslmode = "require"
-    # Construct connection string
-    conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
+    @staticmethod
+    def check_course(course: str):
+        """Check course, must be one of: starter, main, dessert, other."""
+        if course not in ("starter", "main", "dessert", "other"):
+            raise ValueError("Course must be one of: starter, main, dessert, other")
 
-    conn = psycopg2.connect(conn_string)
-    print("Connection established")
-
-    cursor = conn.cursor()
-    # Create a table
-    cursor.execute("DROP TABLE IF EXISTS rezepte")
-    print("Finished killing table")
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-def show_database(host: str, dbname: str, user: str, password: str):
-    # Update connection string information
-    sslmode = "require"
-    # Construct connection string
-    conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
-
-    conn = psycopg2.connect(conn_string)
-    print("Connection established")
-
-    cursor = conn.cursor()
-    # Create a table
-    cursor.execute("SELECT * FROM rezepte")
-    rows = cursor.fetchall()
-    print(rows)
-
-    cursor.close()
-    conn.close()
-
-def fix_entries():
-    pass #TODO: implementation
-
-def check_course(course: str):
-    if course not in ("starter", "main", "dessert", "other"):
-        raise ValueError("Course must be one of: starter, main, dessert, other")
-
-def check_season(season: str):
-    if season not in ("spring", "summer", "autumn", "winter", "other"):
-        raise ValueError("Season must be one of: spring, summer, autumn, winter, other")
-
-if __name__ == "__main__":
-
-    host = os.environ["POSTGRES_HOST"]
-    dbname = os.environ["POSTGRES_DBNAME"]
-    user = os.environ["POSTGRES_USER"]
-    password = os.environ["POSTGRES_PASSWORD"]
-    sslmode = "require"
-    try:
-        show_database(host, dbname, user, password)
-    except:
-        pass
-    delete_database(host, dbname, user, password, sslmode)
-    from food_data import data
-    for entry in data:
-        send_data_to_postgres(host, dbname, user, password, entry)
-    show_database(host, dbname, user, password)
+    @staticmethod
+    def check_season(season: str):
+        """Check season, must be one of: spring, summer, autumn, winter, other."""
+        if season not in ("spring", "summer", "autumn", "winter", "other"):
+            raise ValueError("Season must be one of: spring, summer, autumn, winter, other")

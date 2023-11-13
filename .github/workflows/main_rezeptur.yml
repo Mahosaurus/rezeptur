@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - bugfix/*
+      - feature/*
   workflow_dispatch:
 
 jobs:

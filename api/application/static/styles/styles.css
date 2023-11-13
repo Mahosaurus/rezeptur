@@ -12,6 +12,18 @@ header {
   color: #cad31d;
 }
 
+header a:hover {
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 5px;
+}
+
+header a:visited {
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 5px;
+}
+
 nav {
   background-color: #f8f9fa27;
   display: flex;
@@ -87,21 +99,28 @@ section {
   text-align: center;
   font-family: Arial, sans-serif;
 }
-
-.random-menue {
-  background-color: #474242;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  text-align: center;
+.recipe-list li {
+  padding: 10px;
+  background-color: #a9a169;
+  border-radius: 3px;
+  margin-bottom: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: #ffffff;
+  font-size: larger;
 }
 
 .add-recipe {
   background-color: #474242;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  text-align: center;
+  padding-top: 2%;
+  padding-left: 5%;
+  padding-right: 5%;
+  padding-block-end: 10%;
+  padding-bottom: 2%;
+  font-weight: 900;
+  text-align: left;
+  text-size-adjust: 20px;
 }
 
 h2 {

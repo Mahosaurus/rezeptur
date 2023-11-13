@@ -17,3 +17,5 @@ Steps to get it running in Azure:
 ```
 git config --local --add core.sshCommand 'ssh -i ~/.ssh/X.rsa'
 ```
+
+# TODOS: Rezept Foto -> Rezept
