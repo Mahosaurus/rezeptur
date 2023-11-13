@@ -29,7 +29,8 @@
     },
 
     "remoteEnv": {
-		"NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt"
+		"NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt",
+        "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt"
 	},
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],

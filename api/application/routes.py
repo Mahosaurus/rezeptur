@@ -1,17 +1,20 @@
+import json
+import os
 import random
 
 from flask import current_app as app
-from flask import request, redirect, flash, render_template, url_for
-from src.data_storage.postgres_handler import PostgresHandler
+from flask import request, redirect, flash, render_template, url_for, send_from_directory
+from src.data_storage.postgres_handler import PostgresInteraction
 
-postgres_conn = PostgresHandler(app.config["POSTGRES_HOST"],
-                                app.config["POSTGRES_DBNAME"],
-                                app.config["POSTGRES_USER"],
-                                app.config["POSTGRES_PASSWORD"])
+postgres_conn = PostgresInteraction(app.config["POSTGRES_HOST"],
+                                    app.config["POSTGRES_DBNAME"],
+                                    app.config["POSTGRES_USER"],
+                                    app.config["POSTGRES_PASSWORD"],
+                                    app.config["POSTGRES_TABLE"])
 
 
 # Sample recipe data (you can replace this with a database later)
-@app.route('/')
+@app.route(f'/{app.config["SECRET_KEY"]}', methods=['GET'])
 def index():
     # Query the database for all recipes
     recipes = postgres_conn.extract_data_from_postgres() # recipe 1, recipe 2
@@ -59,3 +62,11 @@ def add_recipe():
     # If it's a GET request, just render the form
     recipes = postgres_conn.extract_data_from_postgres()
     return render_template('add_recipe.html', courses=set(recipe['course'] for recipe in recipes))
+
+@app.route('/export_data', methods=['POST'])
+def export_data():
+    recipes = postgres_conn.export_database()
+    # Return recipes as a file to download, do not render a template, do not return a str
+    with open(os.path.join(app.root_path, 'recipes.txt'), 'w') as f:
+        json.dump(recipes, f, indent=4)
+    return send_from_directory(app.root_path, 'recipes.txt')

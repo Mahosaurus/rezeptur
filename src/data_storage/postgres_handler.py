@@ -4,33 +4,39 @@ import os
 
 import psycopg2
 
-class PostgresHandler:
-    def __init__(self, host: str, dbname: str, user: str, password: str):
-        self.conn = self._connect_to_postgres(host, dbname, user, password)
+class PostgresInteraction():
+    def __init__(self, host: str, dbname: str, user: str, password: str, table: str=os.getenv("POSTGRES_TABLE")):
+        """Class for handling connections to a PostgreSQL database."""
+        self.host = host
+        self.dbname = dbname
+        self.user = user
+        self.password = password
+        self.table = table
+        self.conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(self.host, self.user, self.dbname, self.password, "require")
+        self.conn: psycopg2.extensions.connection=None,
+        self.cursor: psycopg2.extensions.cursor=None
 
-    def _connect_to_postgres(self, host: str, dbname: str, user: str, password: str) -> psycopg2.extensions.connection:
-        """Connect to postgres database."""
-        # Update connection string information
-        sslmode = "require"
-        # Construct connection string
-        conn_string = f"host={host} user={user} dbname={dbname} password={password} sslmode={sslmode}"
-
-        conn = psycopg2.connect(conn_string)
+    def open_cursor_and_conn(self):
+        """Get cursor to postgres database."""
+        self.conn = psycopg2.connect(self.conn_string)
         print("Connection established")
-        return conn
+        self.cursor = self.conn.cursor()
 
-    def _disconnect_from_postgres(self):
-        """Disconnect from postgres database."""
+    def close_cursor_and_conn(self):
+        """Close cursor to postgres database."""
+        self.conn.commit()
+        self.cursor.close()
         self.conn.close()
+        print("Connection closed")
 
     def _get_all_entries(self):
         """Get all entries from postgres database."""
-        cursor = self.conn.cursor()
+        self.open_cursor_and_conn()
         # Create a table
-        cursor.execute("SELECT * FROM rezepte")
-        rows = cursor.fetchall()
+        self.cursor.execute("SELECT * FROM rezepte")
+        rows = self.cursor.fetchall()
 
-        cursor.close()
+        self.close_cursor_and_conn()
         return rows
 
     def send_data_to_postgres(self, data: dict):
@@ -46,25 +52,42 @@ class PostgresHandler:
         self.check_course(course)
         self.check_season(season)
 
-        cursor = self.conn.cursor()
+        self.open_cursor_and_conn()
+
         # Create a table (if not exists)
-        field_types = "name VARCHAR(50), course VARCHAR(30), description VARCHAR(1000), source VARCHAR(100), season VARCHAR(30), style VARCHAR(30)"
-        cursor.execute(f"CREATE TABLE IF NOT EXISTS rezepte (id serial PRIMARY KEY, {field_types});")
+        field_types = (
+            "name VARCHAR(50), "
+            "course VARCHAR(30), "
+            "description VARCHAR(1000), "
+            "source VARCHAR(100), "
+            "season VARCHAR(30), "
+            "style VARCHAR(30)"
+        )
+        create_query = f"CREATE TABLE IF NOT EXISTS rezepte (id serial PRIMARY KEY, {field_types});"
+        self.cursor.execute(create_query)
         print("Finished creating table")
 
         # Insert data into the table
         field_names = "name, course, description, source, season, style"
         field_values = (name, course, description, source, season, style)
-        cursor.execute(f"INSERT INTO rezepte ({field_names}) VALUES {field_values};")
+        insert_query = f"INSERT INTO rezepte ({field_names}) VALUES {field_values};"
+        self.cursor.execute(insert_query)
         print("Inserted 1 rows of data")
-
-        self.conn.commit()
 
         # Remove duplicates
         print("Removing duplicates")
-        cursor.execute("DELETE FROM rezepte a USING rezepte b WHERE a.ctid < b.ctid AND a.name = b.name AND a.course = b.course AND a.description = b.description AND a.source = b.source AND a.season = b.season AND a.style = b.style;")
-        self.conn.commit()
-        cursor.close()
+        delete_query = """
+            DELETE FROM rezepte a USING rezepte b
+            WHERE a.ctid < b.ctid
+            AND a.name = b.name
+            AND a.course = b.course
+            AND a.description = b.description
+            AND a.source = b.source
+            AND a.season = b.season
+            AND a.style = b.style;
+        """
+        self.cursor.execute(delete_query)
+        self.close_cursor_and_conn()
 
     def extract_data_from_postgres(self):
         """Extract data from postgres database for app."""
@@ -74,13 +97,11 @@ class PostgresHandler:
 
     def delete_database(self):
         """Delete database."""
-        cursor = self.conn.cursor()
+        self.open_cursor_and_conn()
         # Create a table
-        cursor.execute("DROP TABLE IF EXISTS rezepte")
+        self.cursor.execute("DROP TABLE IF EXISTS rezepte")
         print("Finished dropping table")
-
-        self.conn.commit()
-        cursor.close()
+        self.close_cursor_and_conn()
 
     def export_database(self, export: bool=False) -> list:
         """Export database entries to json file."""
@@ -95,10 +116,6 @@ class PostgresHandler:
         print("Finished exporting table")
         return export_dict
 
-    def fix_entries(self):
-        """Fix entries."""
-        pass #TODO: implementation
-
     @staticmethod
     def check_course(course: str):
         """Check course, must be one of: starter, main, dessert, other."""
@@ -110,28 +127,3 @@ class PostgresHandler:
         """Check season, must be one of: spring, summer, autumn, winter, other."""
         if season not in ("spring", "summer", "autumn", "winter", "other"):
             raise ValueError("Season must be one of: spring, summer, autumn, winter, other")
-
-if __name__ == "__main__":
-    # The flow
-    host = os.environ["POSTGRES_HOST"]
-    dbname = os.environ["POSTGRES_DBNAME"]
-    user = os.environ["POSTGRES_USER"]
-    password = os.environ["POSTGRES_PASSWORD"]
-    postgres_conn = PostgresHandler(host, dbname, user, password)
-
-    # 1. Export and enter same data
-    # try:
-    #     postgres_conn.export_database(export=True)
-    # except Exception as e:
-    #     print(e)
-    # with open("food_export.json", "r", encoding='utf-8') as filehandle:
-    #     data = json.load(filehandle)
-    # for entry in data:
-    #     postgres_conn.send_data_to_postgres(entry)
-
-    # Replace all entries in the database with the exported ones (manual fix)
-    postgres_conn.delete_database()
-    with open("food_export.json", "r", encoding='utf-8') as filehandle:
-        data = json.load(filehandle)
-    for entry in data:
-        postgres_conn.send_data_to_postgres(entry)
